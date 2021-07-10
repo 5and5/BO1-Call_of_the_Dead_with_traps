@@ -13,12 +13,22 @@ init()
 	level._effect["zapperfx"]					= loadfx("misc/fx_zombie_electric_trap1");
 	level.trap_duration = 25;
 
+	// level thread strat_tester();
+	// level thread get_position();
+	// spawn_zapper_switch("zapper", (-2200, 783, 80), (0, 50, 0) ); // cotd spawn
+	// spawn_zapper_coils("zapper", (-2180, 783, 60), 20, 0, 0, 5 );
+	// level thread add_zapper("zapper", 1000, "ship_house3"); // power
 
-	level thread get_position();
-	spawn_zapper_switch("zapper", (-2200, 783, 80), (0, 0, 0) ); // cotd spawn
-	spawn_zapper_coils("zapper", (-2180, 783, 60), 20, 0, 0, 5 );
+	spawn_zapper_switch("zapper", (-664, -1176, 673), (-4, -77.3, 0) ); // power left of switch outside
+	spawn_zapper_switch("zapper", (-533, -1122, 673), (4, 98.3, 0) ); // power left of switch inside
+	spawn_zapper_switch("zapper", (-610, -760, 645), (4, 103, 0) ); // power right of switch outside
+	spawn_zapper_coils("zapper", (-628, -1161, 668), 17, 4, 0, 4 );
+	spawn_zapper_coils("zapper", (-707, -781, 640), 17, 4, 0, 4 );
 	level thread add_zapper("zapper", 1000, "ship_house3"); // power
 
+	spawn_zapper_switch("zapper2", (-30, 1712, 295), (10, -97, 0) );
+	spawn_zapper_coils("zapper2", (-83, 1722, 297), -20, 0, 0, 4 );
+	level thread add_zapper("zapper2", 1000, "lighthouse_lagoon_enter"); // lighthouse
 }
 get_position()
 {
@@ -28,7 +38,7 @@ get_position()
 	while(1)
 	{
 		iprintln(players.origin);
-		//iprintln(players.angles);
+		iprintln(players.angles);
 		wait 2;
 	}
 }
@@ -42,12 +52,13 @@ spawn_zapper_switch(zapper_name, origin, angle)
 	power_switch setModel( "zombie_sumpf_power_switch" );
 
 	light = Spawn( "script_model", origin_light );
-	light.angles = (angle + (180, 0, 0) );
+	light.angles = ( angle + (180, 0, 0) );
 	light setModel( "zombie_zapper_cagelight" );
 	light linkTo( power_switch );
 	light.script_linkname = (zapper_name + "_light");
 	light.targetname = (zapper_name + "_light");
-	light.angles = angle;
+	light.angles = (30, 60, 0);
+	power_switch.angles = angle;
 
 	trigger = Spawn( "trigger_radius_use", origin, 100, 100, 100 );
 	trigger.targetname = (zapper_name + "_trigger");
@@ -89,13 +100,13 @@ add_zapper(zapper_name, cost, flag)
 	
 	triggers wait_for_power(cost);
 
-	// if(isDefined(flag))
-	// {
-	// 	triggers handle_zapper_trigs("disable");
-	// 	zapper_light_red( lights );
-	// 	flag_wait( flag );
-	// 	triggers handle_zapper_trigs("enable");
-	// }
+	if(isDefined(flag))
+	{
+		triggers handle_zapper_trigs("disable");
+		zapper_light_red( lights );
+		flag_wait( flag );
+		triggers handle_zapper_trigs("enable");
+	}
 	zapper_light_green( lights );
 	
 	while(1)
@@ -229,7 +240,7 @@ wait_for_power(cost)
 		self[i] SetHintString( "Trap is currently unavailable" );
 		self[i] SetCursorHint( "HINT_NOICON" );
 	}
-	//flag_wait( "power_on" );
+	flag_wait( "power_on" );
 	
 	for(i=0;i<self.size;i++)
 		self[i] SetHintString( "Press & hold &&1 to activate the electric barrier [Cost: "+cost+"]" ); //&"ZOMBIE_BUTTON_BUY_TRAP"
@@ -357,7 +368,7 @@ play_elec_vocals()
 		wait(0.15);
 		playsoundatposition("zmb_elec_vocals", org);
 		playsoundatposition("zmb_zombie_arc", org);
-		playsoundatposition("zmb_exp_jib_zombie", org);
+		//playsoundatposition("zmb_exp_jib_zombie", org);
 	}
 }
 electroctute_death_fx()
@@ -425,3 +436,26 @@ electrocute_timeout()
 	
 }
 
+strat_tester()
+{	
+	level.round_number = 60;
+	level.zombie_vars["zombie_spawn_delay"] = 0.05; // round 20 spawn rate
+	level.zombie_move_speed = 105; // running speed
+	level.first_round = false; // force first round to have the proper amount of zombies
+	wait 4;
+	player = get_players()[0];
+	player maps\_zombiemode_perks::give_perk( "specialty_quickrevive", true );
+	player maps\_zombiemode_perks::give_perk( "specialty_flakjacket", true );
+	player maps\_zombiemode_perks::give_perk( "specialty_fastreload", true );
+	player maps\_zombiemode_perks::give_perk( "specialty_additionalprimaryweapon", true );
+	player maps\_zombiemode_perks::give_perk( "specialty_armorvest", true );
+	player maps\_zombiemode_perks::give_perk( "specialty_longersprint", true );
+	player maps\_zombiemode_perks::give_perk( "specialty_rof", true );
+	player maps\_zombiemode_perks::give_perk( "specialty_deadshot", true );
+
+	wait 2;
+	player takeWeapon( "m1911_zm" );
+	player giveWeapon( "crossbow_explosive_upgraded_zm", 0, self maps\_zombiemode_weapons::get_pack_a_punch_weapon_options( "crossbow_explosive_upgraded_zm" ) );	
+	player giveWeapon( "tesla_gun_upgraded_zm", 0, self maps\_zombiemode_weapons::get_pack_a_punch_weapon_options( "tesla_gun_upgraded_zm" ) );
+	//player switchToWeapon( "crossbow_explosive_upgraded_zm");
+}
