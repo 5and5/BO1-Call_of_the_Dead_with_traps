@@ -4,13 +4,68 @@
 
 init()
 {	
-	level._effect["zapper1"]					= loadfx("misc/fx_zombie_electric_trap1");
+	level._effect["zapperfx"]					= loadfx("misc/fx_zombie_electric_trap1");
 	level.trap_duration = 25;
+	PreCacheModel("zombie_zapper_handle");
+	PreCacheModel("zombie_zapper_cagelight");
+	PreCacheModel("zombie_zapper_tesla_coil");
+	PreCacheModel("zombie_sumpf_power_switch");
+	
+	//wait 1;
 
-	wait 1;
+	level thread get_position();
+	spawn_zapper_switch("zapper", (-2200, 783, 80), (0, 90, 0) ); // cotd spawn
+	spawn_zapper_coils("zapper", (-2200, 783, 60), (0, 90, 0), 2 );
 
-	thread add_zapper("zapper1", 1000, "enter_zone1");
-	thread add_zapper("zapper2", 1000, "enter_zone4");
+	thread add_zapper("zapper", 1000, "ship_house3"); // power
+	// thread add_zapper("zapper2", 1000, "enter_zone4");
+}
+get_position()
+{
+	wait 3;
+	players = get_players()[0];
+
+	while(1)
+	{
+		iprintln(players.origin);
+		//iprintln(players.angles);
+		wait 2;
+	}
+}
+
+spawn_zapper_switch(zapper_name, origin, angle)
+{	
+	power_switch = Spawn( "script_model", origin );
+	power_switch.angles = angle;
+	power_switch setModel( "zombie_sumpf_power_switch" );
+
+	light = Spawn( "script_model", origin );
+	light.angles = angle;
+	light setModel( "zombie_zapper_cagelight" );
+	light.targetname = (zapper_name + "_light");
+
+	trigger = Spawn( "trigger_radius_use", origin, 100, 100, 100 );
+	trigger.targetname = (zapper_name + "_trigger");
+}
+spawn_zapper_coils(zapper_name, origin, angle, amount)
+{	
+	damage_radius = (20 * amount);
+	damage_height = 150;
+
+	for( i = 0; i < amount; i++ )
+	{	
+		coil_spacing = (20 * i);
+		coils[i] = Spawn( "script_model", (origin + (0, coil_spacing, 0) ) );
+		coils[i].angles = angle;
+		coils[i] setModel( "zombie_zapper_tesla_coil" );
+
+		fx[i] = Spawn( "script_origin", (origin + (0, coil_spacing, 0) ) );
+		fx[i].targetname = (zapper_name + "_struct");
+	}
+
+	damage = Spawn( "trigger_radius", origin, 7, damage_radius, damage_height );
+	damage.target = (zapper_name + "_damage");
+	damage.targetname = (zapper_name + "_damage");
 }
 add_zapper(zapper_name, cost, flag)
 {
@@ -25,14 +80,14 @@ add_zapper(zapper_name, cost, flag)
 	
 	triggers wait_for_power(cost);
 
-	if(isDefined(flag))
-	{
-		triggers handle_zapper_trigs(handles, "disable");
-		zapper_light_red( lights );
-		flag_wait( flag );
-		triggers handle_zapper_trigs(handles, "enable");
-	}
-	zapper_light_green( lights );
+	// if(isDefined(flag))
+	// {
+	// 	triggers handle_zapper_trigs(handles, "disable");
+	// 	zapper_light_red( lights );
+	// 	flag_wait( flag );
+	// 	triggers handle_zapper_trigs(handles, "enable");
+	// }
+	// zapper_light_green( lights );
 	
 	while(1)
 	{
@@ -92,7 +147,7 @@ zapperFx(name)
 {
 	self.tag_origin = spawn("script_model",self.origin);
 	self.tag_origin setmodel("tag_origin");
-	playfxontag(level._effect["zapper1"],self.tag_origin,"tag_origin");
+	playfxontag(level._effect["zapperfx"],self.tag_origin,"tag_origin");
 	self.tag_origin playsound("zmb_elec_start");
 	self.tag_origin playloopsound("zmb_elec_loop");
 	self thread play_electrical_sound();
@@ -172,7 +227,7 @@ wait_for_power(cost)
 		self[i] SetHintString( "Trap is currently unavailable" );
 		self[i] SetCursorHint( "HINT_NOICON" );
 	}
-	flag_wait( "power_on" );
+	//flag_wait( "power_on" );
 	
 	for(i=0;i<self.size;i++)
 		self[i] SetHintString( "Press & hold &&1 to activate the electric barrier [Cost: "+cost+"]" ); //&"ZOMBIE_BUTTON_BUY_TRAP"

@@ -144,6 +144,7 @@ main()
 	maps\_zombiemode_weap_humangun::init();
 	maps\_zombiemode_weap_sniper_explosive::init();
 	maps\_zombiemode_weap_nesting_dolls::init();
+	maps\_custom_zapper_system::init();
 
 	level thread maps\_zombiemode::register_sidequest( "COTD", "ZOMBIE_COAST_EGG_SOLO", 43, "ZOMBIE_COAST_EGG_COOP", 44 );
 	level.director_should_drop_special_powerup = ::coast_director_should_drop_special_powerup;
