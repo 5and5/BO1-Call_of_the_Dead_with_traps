@@ -3,22 +3,22 @@
 #include maps\_zombiemode_utility;
 
 init()
-{	
-	level._effect["zapperfx"]					= loadfx("misc/fx_zombie_electric_trap1");
-	level.trap_duration = 25;
+{
 	PreCacheModel("zombie_zapper_handle");
 	PreCacheModel("zombie_zapper_cagelight");
+	PreCacheModel("zombie_zapper_cagelight_red");
+	PreCacheModel("zombie_zapper_cagelight_green");
 	PreCacheModel("zombie_zapper_tesla_coil");
 	PreCacheModel("zombie_sumpf_power_switch");
-	
-	//wait 1;
+	level._effect["zapperfx"]					= loadfx("misc/fx_zombie_electric_trap1");
+	level.trap_duration = 25;
+
 
 	level thread get_position();
-	spawn_zapper_switch("zapper", (-2200, 783, 80), (0, 90, 0) ); // cotd spawn
-	spawn_zapper_coils("zapper", (-2200, 783, 60), (0, 90, 0), 2 );
+	spawn_zapper_switch("zapper", (-2200, 783, 80), (0, 0, 0) ); // cotd spawn
+	spawn_zapper_coils("zapper", (-2180, 783, 60), 20, 0, 0, 5 );
+	level thread add_zapper("zapper", 1000, "ship_house3"); // power
 
-	thread add_zapper("zapper", 1000, "ship_house3"); // power
-	// thread add_zapper("zapper2", 1000, "enter_zone4");
 }
 get_position()
 {
@@ -35,42 +35,51 @@ get_position()
 
 spawn_zapper_switch(zapper_name, origin, angle)
 {	
+	origin_light = (origin + (-3.5, -2, 19.2) );
+
 	power_switch = Spawn( "script_model", origin );
-	power_switch.angles = angle;
+	power_switch.angles = (0, 90, 0);
 	power_switch setModel( "zombie_sumpf_power_switch" );
 
-	light = Spawn( "script_model", origin );
-	light.angles = angle;
+	light = Spawn( "script_model", origin_light );
+	light.angles = (angle + (180, 0, 0) );
 	light setModel( "zombie_zapper_cagelight" );
+	light linkTo( power_switch );
+	light.script_linkname = (zapper_name + "_light");
 	light.targetname = (zapper_name + "_light");
+	light.angles = angle;
 
 	trigger = Spawn( "trigger_radius_use", origin, 100, 100, 100 );
 	trigger.targetname = (zapper_name + "_trigger");
 }
-spawn_zapper_coils(zapper_name, origin, angle, amount)
+spawn_zapper_coils(zapper_name, origin, x, y, z, amount)
 {	
-	damage_radius = (20 * amount);
-	damage_height = 150;
-
 	for( i = 0; i < amount; i++ )
 	{	
-		coil_spacing = (20 * i);
-		coils[i] = Spawn( "script_model", (origin + (0, coil_spacing, 0) ) );
-		coils[i].angles = angle;
-		coils[i] setModel( "zombie_zapper_tesla_coil" );
-
-		fx[i] = Spawn( "script_origin", (origin + (0, coil_spacing, 0) ) );
-		fx[i].targetname = (zapper_name + "_struct");
+		new_origin = (origin + (x * i, y * i, z * i));
+		_spawn_zapper_coil(zapper_name, new_origin);
 	}
+}
+_spawn_zapper_coil(zapper_name, origin)
+{	
+	origin_fx = (origin + (-42.5, 0, 0) );
+	origin_coil = (origin + (0, 0, 60) );
+	origin_damage = (origin + (0, 0, -20) );
 
-	damage = Spawn( "trigger_radius", origin, 7, damage_radius, damage_height );
+	coil = Spawn( "script_model", (origin_coil ) );
+	coil.angles = (180, 0, 0);
+	coil setModel( "zombie_zapper_tesla_coil" );
+	
+	fx = Spawn( "script_origin", (origin_fx  ) );
+	fx.targetname = (zapper_name + "_struct");
+
+	damage = Spawn( "trigger_radius", (origin_damage ), 7, 15, 90 );
 	damage.target = (zapper_name + "_damage");
 	damage.targetname = (zapper_name + "_damage");
 }
 add_zapper(zapper_name, cost, flag)
 {
 	triggers = getentarray(zapper_name + "_trigger", "targetname");
-	handles = getentarray(zapper_name + "_handle", "targetname");
 	lights = getentarray(zapper_name + "_light", "targetname");
 	damage_trigs = getentarray(zapper_name + "_damage", "targetname");
 	fx_structs = getentarray(zapper_name + "_struct", "targetname");
@@ -82,12 +91,12 @@ add_zapper(zapper_name, cost, flag)
 
 	// if(isDefined(flag))
 	// {
-	// 	triggers handle_zapper_trigs(handles, "disable");
+	// 	triggers handle_zapper_trigs("disable");
 	// 	zapper_light_red( lights );
 	// 	flag_wait( flag );
-	// 	triggers handle_zapper_trigs(handles, "enable");
+	// 	triggers handle_zapper_trigs("enable");
 	// }
-	// zapper_light_green( lights );
+	zapper_light_green( lights );
 	
 	while(1)
 	{
@@ -107,7 +116,7 @@ add_zapper(zapper_name, cost, flag)
 		}
 		play_sound_at_pos( "purchase", player.origin );
 		player maps\_zombiemode_score::minus_to_player_score( cost );
-		triggers handle_zapper_trigs(handles, "disable");
+		triggers handle_zapper_trigs("disable");
 		wait 0.7;
 		zapper_light_red( lights );
 		array_thread(fx_structs,::zapperFx,zapper_name);
@@ -115,7 +124,7 @@ add_zapper(zapper_name, cost, flag)
 		wait(level.trap_duration);
 		level notify(zapper_name + "_end");
 		wait(level.trap_duration);
-		triggers handle_zapper_trigs(handles, "enable");
+		triggers handle_zapper_trigs("enable");
 		zapper_light_green( lights );
 		wait 0.7;
 	}
@@ -169,7 +178,7 @@ play_electrical_sound()
 		playsoundatposition("zmb_elec_arc", self.origin);
 	}
 }
-handle_zapper_trigs(handles, type)
+handle_zapper_trigs(type)
 {
 	for(i=0;i<self.size;i++)
 	{
@@ -177,13 +186,6 @@ handle_zapper_trigs(handles, type)
 			self[i] disable_trigger();
 		else if(type == "enable")
 			self[i] enable_trigger();	
-	}
-	for(i=0;i<handles.size;i++)
-	{
-		if(type == "disable")
-			handles[i] disable_zapper_switch();
-		else if(type == "enable")
-			handles[i] enable_zapper_switch();
 	}
 }
 zapper_light_red( zapper_lights )
@@ -199,7 +201,7 @@ zapper_light_red( zapper_lights )
 
 		zapper_lights[i].fx = maps\_zombiemode_net::network_safe_spawn( "trap_light_red", 2, "script_model", zapper_lights[i].origin );
 		zapper_lights[i].fx setmodel("tag_origin");
-		zapper_lights[i].fx.angles = zapper_lights[i].angles+(-90,0,0);
+		zapper_lights[i].fx.angles = zapper_lights[i].angles+(0,0,0);
 		playfxontag(level._effect["zapper_light_notready"],zapper_lights[i].fx,"tag_origin");
 	}
 }
@@ -216,7 +218,7 @@ zapper_light_green( zapper_lights )
 
 		zapper_lights[i].fx = maps\_zombiemode_net::network_safe_spawn( "trap_light_green", 2, "script_model", zapper_lights[i].origin );
 		zapper_lights[i].fx setmodel("tag_origin");
-		zapper_lights[i].fx.angles = zapper_lights[i].angles+(-90,0,0);
+		zapper_lights[i].fx.angles = zapper_lights[i].angles+(0,0,0);
 		playfxontag(level._effect["zapper_light_ready"],zapper_lights[i].fx,"tag_origin");
 	}
 }
@@ -257,7 +259,7 @@ zombie_elec_death(flame_chance)
 	
 	self.marked_for_death = true;
 
-	if ( IsDefined( self.animname ) && self.animname != "zombie_dog" )
+	if ( IsDefined( self.animname ) && self.animname != "zombie_dog" && self.animname != "director_zombie")
 	{
 		// 10% chance the zombie will burn, a max of 6 burning zombs can be going at once
 		// otherwise the zombie just gibs and dies
@@ -294,8 +296,15 @@ zombie_elec_death(flame_chance)
 	}
 
 	// custom damage
-	level notify( "trap_kill", self );
-	self dodamage(self.health + 666, self.origin);
+	if( self.animname == "director_zombie" )
+	{
+		self dodamage(500, self.origin);
+	}
+	else	
+	{
+		level notify( "trap_kill", self );
+		self dodamage(self.health + 666, self.origin);
+	}
 }
 player_elec_damage()
 {	

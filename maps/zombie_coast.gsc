@@ -37,6 +37,14 @@ main()
 	PreCacheModel( "viewmodel_zom_rooker_arms" );
 	PreCacheModel( "viewmodel_zom_trejo_arms" );
 
+	// traps
+	PreCacheModel("zombie_zapper_handle");
+	PreCacheModel("zombie_zapper_cagelight");
+	PreCacheModel("zombie_zapper_cagelight_red");
+	PreCacheModel("zombie_zapper_cagelight_green");
+	PreCacheModel("zombie_zapper_tesla_coil");
+	PreCacheModel("zombie_sumpf_power_switch");
+
 	level._zombie_custom_add_weapons = ::custom_add_weapons;
 	
 	//clientflag variables		
@@ -138,7 +146,7 @@ main()
 	//level.zombiemode_animated_intro = maps\_zombiemode_animated_intro::precache_scene_assets;
 	// DO ACTUAL ZOMBIEMODE INIT
 	maps\_zombiemode::main();
-	
+
 	maps\_sticky_grenade::init();
 	maps\_zombiemode_weap_sickle::init();
 	maps\_zombiemode_weap_humangun::init();
