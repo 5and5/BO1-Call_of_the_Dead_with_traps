@@ -331,6 +331,7 @@ player_elec_damage()
 	{
 		self.is_burning = 1;		
 		self setelectrified(1.25);
+		self shellshock("electrocution", 1.25);
 		
 		if(level.elec_loop == 0)
 		{	
@@ -338,11 +339,11 @@ player_elec_damage()
 			self playsound("zmb_zombie_arc");
 		}
 		
-		if(self hasperk("specialty_flakjacket"))
-		{
-			wait(.1);
-		}
-		else if(!self hasperk("specialty_armorvest") || self.health - 100 < 1)
+		// if(self hasperk("specialty_flakjacket"))
+		// {
+		// 	wait(.1);
+		// }
+		if(!self hasperk("specialty_armorvest") || self.health - 100 < 1)
 		{
 			radiusdamage(self.origin,10,self.health + 100,self.health + 100);
 		}
