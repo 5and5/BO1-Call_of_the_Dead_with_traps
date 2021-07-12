@@ -15,9 +15,6 @@ init()
 
 	// level thread strat_tester();
 	// level thread get_position();
-	// spawn_zapper_switch("zapper", (-2200, 783, 80), (0, 50, 0) ); // cotd spawn
-	// spawn_zapper_coils("zapper", (-2180, 783, 60), 20, 0, 0, 5 );
-	// level thread add_zapper("zapper", 1000, "ship_house3"); // power
 
 	spawn_zapper_switch("zapper", (-664, -1176, 673), (-4, -77.3, 0) ); // power left of switch outside
 	spawn_zapper_switch("zapper", (-533, -1122, 673), (4, 98.3, 0) ); // power left of switch inside
@@ -28,7 +25,11 @@ init()
 
 	spawn_zapper_switch("zapper2", (-30, 1712, 295), (10, -97, 0) );
 	spawn_zapper_coils("zapper2", (-83, 1722, 297), -20, 0, 0, 4 );
-	level thread add_zapper("zapper2", 1000, "lighthouse_lagoon_enter"); // lighthouse
+	level thread add_zapper("zapper2", 1000, "lighthouse_lagoon_enter"); // lighthouse 1
+
+	spawn_zapper_switch("zapper3", (-388, 1243, 430), (10, 13, 0) );
+	spawn_zapper_coils("zapper3", (-372, 1173, 409), 8.5, -12, 0, 6);
+	level thread add_zapper("zapper3", 1000, "res_2_lighthouse1"); // lighthouse 2
 }
 get_position()
 {
@@ -40,6 +41,30 @@ get_position()
 		iprintln(players.origin);
 		iprintln(players.angles);
 		wait 2;
+	}
+}
+
+set_trap_location( trap, x ,y, z, xa, ya, za )
+{	
+	setDvar("x_switch", x);
+	setDvar("y_switch", y);
+	setDvar("z_switch", z);
+	setDvar("xa_switch", xa);
+	setDvar("ya_switch", ya);
+	setDvar("za_switch", za);
+
+	while(1)
+	{
+		x = getDvarFloat( "x_switch" );
+		y = getDvarFloat( "y_switch" );
+		z = getDvarFloat( "z_switch" );
+		xa = getDvarFloat( "xa_switch" );
+		ya = getDvarFloat( "ya_switch" );
+		za = getDvarFloat( "za_switch" );
+
+		trap.origin = (x, y, z);
+		trap.angles = (xa, ya, za);
+		wait 0.1;
 	}
 }
 
@@ -62,6 +87,8 @@ spawn_zapper_switch(zapper_name, origin, angle)
 
 	trigger = Spawn( "trigger_radius_use", origin, 100, 100, 100 );
 	trigger.targetname = (zapper_name + "_trigger");
+
+	return power_switch;
 }
 spawn_zapper_coils(zapper_name, origin, x, y, z, amount)
 {	
@@ -87,6 +114,8 @@ _spawn_zapper_coil(zapper_name, origin)
 	damage = Spawn( "trigger_radius", (origin_damage ), 7, 15, 90 );
 	damage.target = (zapper_name + "_damage");
 	damage.targetname = (zapper_name + "_damage");
+
+	return coil;
 }
 add_zapper(zapper_name, cost, flag)
 {
@@ -298,7 +327,7 @@ zombie_elec_death(flame_chance)
 			if(randomint(100) > 50 )
 			{
 				self thread electroctute_death_fx();
-				self thread play_elec_vocals();
+				//self thread play_elec_vocals();
 			}
 			
 			wait(randomfloat(1.25));
@@ -369,7 +398,7 @@ play_elec_vocals()
 		wait(0.15);
 		playsoundatposition("zmb_elec_vocals", org);
 		playsoundatposition("zmb_zombie_arc", org);
-		//playsoundatposition("zmb_exp_jib_zombie", org);
+		playsoundatposition("zmb_exp_jib_zombie", org);
 	}
 }
 electroctute_death_fx()
@@ -455,6 +484,7 @@ strat_tester()
 	player maps\_zombiemode_perks::give_perk( "specialty_deadshot", true );
 
 	wait 2;
+	player.score = 500000;
 	player takeWeapon( "m1911_zm" );
 	player giveWeapon( "crossbow_explosive_upgraded_zm", 0, self maps\_zombiemode_weapons::get_pack_a_punch_weapon_options( "crossbow_explosive_upgraded_zm" ) );	
 	player giveWeapon( "tesla_gun_upgraded_zm", 0, self maps\_zombiemode_weapons::get_pack_a_punch_weapon_options( "tesla_gun_upgraded_zm" ) );
